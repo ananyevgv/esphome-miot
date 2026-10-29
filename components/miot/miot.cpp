@@ -169,7 +169,8 @@ std::string Miot::get_printable_string(const uint8_t *data, size_t len) {
       s += data[i];
     else {
       // FIX 2026.11.0: str_snprintf -> snprintf
-      char hex_buf[4];
+      // "\\x%02X" = '\', 'x', 2 hex digits, + NUL => 5 bytes
+      char hex_buf[5];
       snprintf(hex_buf, sizeof(hex_buf), "\\x%02X", data[i]);
       s += hex_buf;
     }
