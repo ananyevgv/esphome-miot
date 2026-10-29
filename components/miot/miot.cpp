@@ -1,5 +1,6 @@
 #include <cstring>
 #include <vector>
+#include <cstdio>  // FIX 2026.11.0: snprintf
 
 #include "miot.h"
 #include "esphome/components/network/util.h"
@@ -65,7 +66,10 @@ void Miot::setup() {
 
     for (auto it = listeners_.cbegin(); it != listeners_.cend(); ++it) {
       if ((*it).second.poll) {
-        part = str_snprintf(" %" PRIu32 " %" PRIu32, 32, (*it).first.first, (*it).first.second);
+        // FIX 2026.11.0: str_snprintf -> snprintf
+        char part_buf[32];
+        snprintf(part_buf, sizeof(part_buf), " %" PRIu32 " %" PRIu32, (*it).first.first, (*it).first.second);
+        part = part_buf;
 
         if (cmd.size() + part.size() > MAX_COMMAND_LENGTH) {
           queue_command("get_properties" + cmd);
@@ -163,8 +167,12 @@ std::string Miot::get_printable_string(const uint8_t *data, size_t len) {
   for (size_t i = 0; i < len; ++i)
     if (std::isprint(data[i]))
       s += data[i];
-    else
-      s += str_snprintf("\\x%02X", 4, data[i]);
+    else {
+      // FIX 2026.11.0: str_snprintf -> snprintf
+      char hex_buf[4];
+      snprintf(hex_buf, sizeof(hex_buf), "\\x%02X", data[i]);
+      s += hex_buf;
+    }
   return s;
 }
 
@@ -432,7 +440,10 @@ void Miot::process_message_() {
     ESP_LOGD(TAG, "MCU time request: %s", reply.c_str());
     send_reply_(reply.c_str());
   } else if (cmd == "mac") {
-    send_reply_(get_mac_address().c_str());
+    // FIX 2026.11.0: get_mac_address() -> get_mac_address_into_buffer()
+    char mac_buf[MAC_ADDRESS_BUFFER_SIZE];
+    get_mac_address_into_buffer(mac_buf);
+    send_reply_(mac_buf);
   } else if (cmd == "model") {
     model_ = strtok_r(nullptr, " ", &saveptr);
     if (!model_.empty())
