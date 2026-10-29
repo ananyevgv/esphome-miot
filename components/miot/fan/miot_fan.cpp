@@ -76,6 +76,8 @@ void MiotFan::setup() {
   std::vector<const char *> modes;
   for (auto const &iter : preset_modes_)
     modes.push_back(iter.second);
+  // FIX 2026.11.0: set_supported_preset_modes() must be called on the Fan entity,
+  // not on FanTraits. In 2026.11.0 the FanTraits variant was removed.
   this->set_supported_preset_modes(modes);
 }
 
@@ -111,6 +113,7 @@ fan::FanTraits MiotFan::get_traits() {
                         this->direction_siid_ != 0 && this->direction_piid_ != 0,
                         (this->speed_max_ - this->speed_min_) / this->speed_step_ + 1);
 
+  // FIX 2026.11.0: correct new API — wire preset modes into traits here
   this->wire_preset_modes_(traits);
 
   return traits;
